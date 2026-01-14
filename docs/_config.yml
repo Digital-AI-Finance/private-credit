@@ -1,0 +1,49 @@
+title: Private Credit
+description: Deep Generative Models for Private Credit SPV Analytics
+baseurl: "/private-credit"
+url: "https://digital-ai-finance.github.io"
+
+# Theme
+remote_theme: pages-themes/minimal@v0.2.0
+plugins:
+  - jekyll-remote-theme
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# Navigation
+header_pages:
+  - getting-started.md
+  - installation.md
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: "default"
+
+# SEO
+author: Digital Finance Research
+twitter:
+  card: summary
+social:
+  name: Digital AI Finance
+  links:
+    - https://github.com/Digital-AI-Finance
+
+# Markdown
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: true
+
+# Exclude
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor

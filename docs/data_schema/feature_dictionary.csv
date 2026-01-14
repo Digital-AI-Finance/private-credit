@@ -1,0 +1,64 @@
+table,field,dtype,description,unit,range,required,source
+loans,loan_id,str,Unique loan identifier,-,-,Y,originator
+loans,origination_date,date,Date loan was originated,YYYY-MM-DD,-,Y,originator
+loans,maturity_date,date,Scheduled maturity date,YYYY-MM-DD,-,Y,originator
+loans,original_balance,float,Original loan principal,currency,[1000;50000000],Y,originator
+loans,interest_rate,float,Contractual interest rate,annual %,[0.01;0.25],Y,originator
+loans,rate_type,str,Fixed or floating rate,-,fixed|float,Y,originator
+loans,spread_bps,int,Spread over benchmark for floating,bps,[50;800],N,originator
+loans,benchmark,str,Reference rate for floating,-,SOFR|EURIBOR|LIBOR,N,originator
+loans,payment_frequency,str,Payment schedule,-,monthly|quarterly|semiannual|annual,Y,originator
+loans,amortization_type,str,Principal repayment structure,-,amortizing|bullet|balloon,Y,originator
+loans,asset_class,str,Loan category,-,corporate|consumer|realestate|receivables,Y,originator
+loans,ltv_origination,float,Loan-to-value at origination,ratio,[0.0;1.2],N,originator
+loans,dti_dscr_origination,float,DTI or DSCR at origination,ratio,[0.5;5.0],N,originator
+loans,internal_score_origination,float,Internal credit score,-,[0;100],N,originator
+loans,external_score_origination,int,External bureau score,-,[300;850],N,bureau
+loans,industry_sector,str,Borrower industry NACE code,-,-,N,originator
+loans,geography_country,str,Borrower country,ISO-2,-,Y,originator
+loans,geography_region,str,Borrower region/state,-,-,N,originator
+loans,borrower_type,str,Borrower category,-,SME|midmarket|large_corporate|consumer,Y,originator
+loans,collateral_type,str,Type of collateral,-,real_estate|equipment|inventory|receivables|unsecured,N,originator
+loans,collateral_value_origination,float,Collateral value at origination,currency,[0;inf],N,originator
+loans,originator_id,str,Identifier of loan originator,-,-,Y,servicer
+loans,vintage_cohort,str,Origination cohort,YYYY-MM,-,Y,derived
+loans,underwriting_standard_version,str,Version of underwriting criteria,-,-,N,originator
+loans,term_months,int,Original loan term,months,[1;360],Y,originator
+loan_monthly,loan_id,str,Foreign key to loans table,-,-,Y,servicer
+loan_monthly,reporting_month,date,Reporting period,YYYY-MM,-,Y,servicer
+loan_monthly,current_balance,float,Outstanding principal balance,currency,[0;inf],Y,servicer
+loan_monthly,scheduled_payment,float,Contractual payment due,currency,[0;inf],Y,servicer
+loan_monthly,actual_payment,float,Payment received,currency,[0;inf],Y,servicer
+loan_monthly,principal_paid,float,Principal portion of payment,currency,[0;inf],Y,servicer
+loan_monthly,interest_paid,float,Interest portion of payment,currency,[0;inf],Y,servicer
+loan_monthly,prepayment_amount,float,Unscheduled principal payment,currency,[0;inf],N,servicer
+loan_monthly,days_past_due,int,Days since missed payment,days,[0;999],Y,servicer
+loan_monthly,delinquency_bucket,str,DPD category,-,current|30dpd|60dpd|90dpd|120dpd|150dpd|180dpd,Y,derived
+loan_monthly,months_in_bucket,int,Months in current bucket,months,[0;inf],Y,derived
+loan_monthly,loan_state,str,Current loan status,-,performing|delinquent|default|prepaid|matured|restructured,Y,servicer
+loan_monthly,cure_flag,bool,Cured from delinquency this month,-,0|1,N,derived
+loan_monthly,modification_flag,bool,Loan modified this month,-,0|1,N,servicer
+loan_monthly,forbearance_flag,bool,In forbearance,-,0|1,N,servicer
+loan_monthly,collateral_value_current,float,Updated collateral value,currency,[0;inf],N,servicer
+loan_monthly,loss_amount,float,Realized loss if defaulted,currency,[0;inf],N,servicer
+loan_monthly,recovery_amount,float,Recovery if in workout,currency,[0;inf],N,servicer
+macro_monthly,reporting_month,date,Reporting period,YYYY-MM,-,Y,external
+macro_monthly,gdp_growth_yoy,float,Year-over-year GDP growth,annual %,[-0.15;0.15],Y,external
+macro_monthly,unemployment_rate,float,Unemployment rate,%,[0.02;0.25],Y,external
+macro_monthly,inflation_rate,float,CPI inflation,annual %,[-0.05;0.15],Y,external
+macro_monthly,policy_rate,float,Central bank policy rate,%,[0.0;0.15],Y,external
+macro_monthly,yield_10y,float,10-year government bond yield,%,[0.0;0.10],Y,external
+macro_monthly,credit_spread_ig,float,IG corporate spread over govt,bps,[50;500],Y,external
+macro_monthly,credit_spread_hy,float,HY corporate spread over govt,bps,[200;2000],Y,external
+macro_monthly,property_price_index,float,Property price index,index,[50;200],N,external
+macro_monthly,sector_default_rate,float,Industry default rate,annual %,[0.0;0.20],N,external
+spv_structure,spv_id,str,SPV identifier,-,-,Y,structuring
+spv_structure,tranche_id,str,Tranche identifier,-,-,Y,structuring
+spv_structure,tranche_name,str,Tranche label,-,senior|mezzanine|equity,Y,structuring
+spv_structure,tranche_size,float,Tranche notional,currency,[0;inf],Y,structuring
+spv_structure,attachment_point,float,Loss attachment,ratio,[0;1],Y,structuring
+spv_structure,detachment_point,float,Loss detachment,ratio,[0;1],Y,structuring
+spv_structure,coupon_rate,float,Tranche coupon,%,[0;0.20],Y,structuring
+spv_structure,priority_order,int,Waterfall priority,-,[1;10],Y,structuring
+spv_structure,oc_trigger,float,OC test threshold,ratio,[1.0;2.0],N,structuring
+spv_structure,ic_trigger,float,IC test threshold,ratio,[1.0;2.0],N,structuring

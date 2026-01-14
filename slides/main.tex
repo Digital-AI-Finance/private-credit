@@ -1,0 +1,286 @@
+\documentclass[8pt,aspectratio=169]{beamer}
+\usetheme{Madrid}
+\usecolortheme{default}
+
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{tikz}
+
+% Custom colors
+\definecolor{primary}{RGB}{52, 152, 219}
+\definecolor{secondary}{RGB}{46, 204, 113}
+\definecolor{accent}{RGB}{231, 76, 60}
+
+\setbeamercolor{structure}{fg=primary}
+\setbeamercolor{title}{fg=white,bg=primary}
+\setbeamercolor{frametitle}{fg=white,bg=primary}
+
+% Bottom note command
+\newcommand{\bottomnote}[1]{%
+\vfill\footnotesize\textcolor{gray}{#1}}
+
+\title{Deep Generative Models for Private Credit SPV Analytics}
+\subtitle{Cashflow Estimation and Portfolio Loss Distribution}
+\author{Digital Finance Research}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}[t]{Outline}
+\tableofcontents
+\end{frame}
+
+\section{Problem Statement}
+
+\begin{frame}[t]{Private Credit SPV Challenge}
+\textbf{Special Purpose Vehicles (SPVs) in Private Credit}
+\begin{itemize}
+\item Securitize portfolios of corporate, consumer, real estate, and trade receivables
+\item Need to estimate: loan-level cashflows, portfolio losses, tranche returns
+\item Required for: pricing, risk management, regulatory compliance (IFRS 9, Basel)
+\end{itemize}
+\vspace{0.3cm}
+\textbf{Key Modeling Challenges}
+\begin{itemize}
+\item Heterogeneous loan characteristics across asset classes
+\item Macro-economic dependencies in default and prepayment
+\item Correlation structure for portfolio-level risk
+\end{itemize}
+\bottomnote{Traditional Markov models lack flexibility for complex dynamics}
+\end{frame}
+
+\begin{frame}[t]{SPV Data Structure}
+\begin{center}
+\includegraphics[width=0.55\textwidth]{charts/02_data_flow/chart.pdf}
+\end{center}
+\bottomnote{Originators contribute loan portfolios; SPV tranches absorb losses in priority order}
+\end{frame}
+
+\section{Model Architecture}
+
+\begin{frame}[t]{Hierarchical Deep Generative Framework}
+\begin{center}
+\includegraphics[width=0.58\textwidth]{charts/01_architecture/chart.pdf}
+\end{center}
+\bottomnote{Four-level hierarchy: Macro $\to$ Cohort $\to$ Loan $\to$ Portfolio}
+\end{frame}
+
+\begin{frame}[t]{Level 1: Macro Scenario Generator (VAE)}
+\textbf{Conditional Variational Autoencoder for Macro Paths}
+\begin{itemize}
+\item Generate correlated macro time series: GDP, unemployment, credit spreads
+\item Condition on scenario type: baseline, adverse, severely adverse
+\item Encoder-decoder with LSTM for temporal dynamics
+\end{itemize}
+\vspace{0.3cm}
+\textbf{Architecture}
+\begin{equation*}
+z \sim q_\phi(z|x, s), \quad \hat{x} = p_\theta(x|z, s)
+\end{equation*}
+where $s$ is scenario label, $z$ is latent code, $x$ is macro path.
+\bottomnote{Enables joint generation and scenario-conditional stress testing}
+\end{frame}
+
+\begin{frame}[t]{Level 2: Transition Transformer}
+\textbf{Cohort-Level Transition Matrix Prediction}
+\begin{itemize}
+\item Transformer encoder processes macro path + cohort features
+\item Outputs time-varying transition matrices $P_t$ per cohort
+\item Captures systematic risk and macro sensitivity
+\end{itemize}
+\vspace{0.3cm}
+\textbf{Transition Probabilities}
+\begin{equation*}
+P_t(\text{state}_{t+1} | \text{state}_t, \text{macro}_t, \text{cohort}) = f_\theta(\text{macro}_{1:t}, \text{cohort})
+\end{equation*}
+\bottomnote{Roll rates, cure rates, prepayment rates vary with economic conditions}
+\end{frame}
+
+\begin{frame}[t]{Loan State Transitions}
+\begin{center}
+\includegraphics[width=0.55\textwidth]{charts/03_model_hierarchy/chart.pdf}
+\end{center}
+\bottomnote{Seven-state Markov chain with absorbing states for default, prepayment, maturity}
+\end{frame}
+
+\begin{frame}[t]{Level 3: Loan Trajectory Model}
+\textbf{Autoregressive Generation of Individual Loan Paths}
+\begin{itemize}
+\item Transformer decoder for state sequence (discrete)
+\item Diffusion head for payment amounts (continuous)
+\item Hazard rate module for default timing (survival)
+\end{itemize}
+\vspace{0.3cm}
+\textbf{Components}
+\begin{equation*}
+p(\text{state}_t, \text{payment}_t | \text{history}, \text{loan features}, \text{macro})
+\end{equation*}
+\bottomnote{Captures heterogeneity within cohorts and idiosyncratic risk}
+\end{frame}
+
+\begin{frame}[t]{Level 4: Portfolio Aggregator}
+\textbf{Differentiable Waterfall for End-to-End Training}
+\begin{itemize}
+\item Aggregate loan trajectories to portfolio cashflows
+\item Apply waterfall: fees $\to$ senior interest $\to$ mezzanine $\to$ equity
+\item Compute tranche-level metrics: IRR, loss rates, coverage ratios
+\end{itemize}
+\vspace{0.3cm}
+\textbf{Loss Distribution}
+\begin{equation*}
+\text{VaR}_\alpha = F^{-1}_L(\alpha), \quad \text{CVaR}_\alpha = \mathbb{E}[L | L > \text{VaR}_\alpha]
+\end{equation*}
+\bottomnote{Full distribution enables regulatory capital and pricing calculations}
+\end{frame}
+
+\section{Data Schema}
+
+\begin{frame}[t]{Loan Tape Structure}
+\textbf{Static Features (At Origination)}
+\begin{table}
+\footnotesize
+\begin{tabular}{lll}
+\toprule
+\textbf{Category} & \textbf{Features} & \textbf{Examples} \\
+\midrule
+Loan Terms & Balance, rate, term, amortization & EUR 500k, 6\%, 60mo \\
+Underwriting & LTV, DSCR, credit scores & 75\%, 1.3x, 720 \\
+Borrower & Industry, geography, type & Manufacturing, DE, SME \\
+Collateral & Type, value, lien position & Real estate, EUR 650k \\
+\bottomrule
+\end{tabular}
+\end{table}
+\textbf{Time-Varying Features (Monthly Panel)}
+\begin{table}
+\footnotesize
+\begin{tabular}{lll}
+\toprule
+\textbf{Category} & \textbf{Features} \\
+\midrule
+Balance & Current balance, scheduled/actual payment \\
+Delinquency & Days past due, bucket (30/60/90+), cure flag \\
+State & Performing, delinquent, default, prepaid, matured \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}[t]{Asset Class Specifications}
+\begin{table}
+\footnotesize
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Parameter} & \textbf{Corporate} & \textbf{Consumer} & \textbf{Real Estate} & \textbf{Receivables} \\
+\midrule
+Balance Range & 100k--5M & 1k--100k & 50k--10M & 1k--5M \\
+Interest Rate & 4--12\% & 5--20\% & 2--8\% & 3--10\% \\
+Term (months) & 12--84 & 6--84 & 60--360 & 1--6 \\
+Annual Default & 1--5\% & 2--8\% & 0.5--3\% & 0.5--2\% \\
+LGD & 30--60\% & 60--90\% & 15--40\% & 20--50\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+\bottomnote{Different risk profiles require asset-class-specific calibration}
+\end{frame}
+
+\section{Implementation}
+
+\begin{frame}[t]{Training Strategy}
+\textbf{Stage 1: Pre-train Components Separately}
+\begin{itemize}
+\item Macro VAE on historical macro series
+\item Transition Transformer on cohort-level roll data
+\item Loan trajectory model on loan-month panel
+\end{itemize}
+\vspace{0.3cm}
+\textbf{Stage 2: End-to-End Fine-Tuning}
+\begin{itemize}
+\item Joint training with portfolio loss targets
+\item Adversarial scenarios for tail calibration
+\end{itemize}
+\vspace{0.3cm}
+\textbf{Stage 3: Calibration}
+\begin{itemize}
+\item Match historical default rates and loss distribution moments
+\item Validate on out-of-sample vintages
+\end{itemize}
+\end{frame}
+
+\begin{frame}[t]{Outputs and Use Cases}
+\begin{table}
+\footnotesize
+\begin{tabular}{lll}
+\toprule
+\textbf{Output} & \textbf{Format} & \textbf{Use Case} \\
+\midrule
+PD Term Structure & Loan $\times$ Month matrix & Pricing, ECL calculation \\
+LGD Distribution & Per-loan percentiles & Capital modeling \\
+Cashflow Paths & $N_{\text{sim}} \times T$ matrix & DCF valuation \\
+Loss Distribution & VaR, CVaR percentiles & Risk limits, capital \\
+Tranche Returns & By tranche, by scenario & Investment decisions \\
+\bottomrule
+\end{tabular}
+\end{table}
+\vspace{0.3cm}
+\textbf{Scenario Capabilities}
+\begin{itemize}
+\item Baseline: unconditional generation from VAE
+\item Deterministic stress: fix macro path, generate loans
+\item Probabilistic stress: condition on tail of macro distribution
+\item Reverse stress: find macro path producing target loss
+\end{itemize}
+\end{frame}
+
+\section{Conclusion}
+
+\begin{frame}[t]{Summary}
+\textbf{Contribution}
+\begin{itemize}
+\item Hierarchical deep generative framework for private credit SPV analytics
+\item Macro VAE + Transition Transformer + Loan Trajectory + Portfolio Aggregator
+\item End-to-end differentiable for joint training and calibration
+\end{itemize}
+\vspace{0.3cm}
+\textbf{Advantages over Traditional Models}
+\begin{itemize}
+\item Flexible: captures complex macro-credit dependencies
+\item Generative: full distribution, not just point estimates
+\item Scalable: handles large portfolios with heterogeneous assets
+\item Interpretable: hierarchical structure maps to business logic
+\end{itemize}
+\vspace{0.3cm}
+\textbf{Next Steps}
+\begin{itemize}
+\item Calibration to historical CLO/ABS data
+\item Stress testing framework integration
+\item Real-time inference for portfolio monitoring
+\end{itemize}
+\end{frame}
+
+\begin{frame}[t]{References}
+\footnotesize
+\textbf{Credit Risk}
+\begin{itemize}
+\item Merton, R.C. (1974). On the pricing of corporate debt
+\item CreditMetrics (1997). J.P. Morgan Technical Document
+\item CreditRisk+ (1997). Credit Suisse First Boston
+\end{itemize}
+\textbf{Deep Generative Models}
+\begin{itemize}
+\item Kingma \& Welling (2014). Auto-Encoding Variational Bayes
+\item Ho et al. (2020). Denoising Diffusion Probabilistic Models
+\item Vaswani et al. (2017). Attention Is All You Need
+\end{itemize}
+\textbf{Time Series Generation}
+\begin{itemize}
+\item Yoon et al. (2019). Time-series Generative Adversarial Networks
+\item Tashiro et al. (2021). CSDI: Conditional Score-based Diffusion
+\end{itemize}
+\end{frame}
+
+\end{document}
