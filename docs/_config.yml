@@ -2,6 +2,7 @@ title: Private Credit
 description: Deep Generative Models for Private Credit SPV Analytics
 baseurl: "/private-credit"
 url: "https://digital-ai-finance.github.io"
+repository: Digital-AI-Finance/private-credit
 
 # Theme
 remote_theme: pages-themes/minimal@v0.2.0
