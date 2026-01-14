@@ -52,13 +52,13 @@ docs/.jekyll-cache/
 docs/.sass-cache/
 .bundle/
 
-# Models and data
+# Models and data (top-level directories for checkpoints/data files)
 *.pt
 *.pth
 *.ckpt
 *.h5
-data/
-models/
+/data/
+/models/
 
 # Logs
 *.log
