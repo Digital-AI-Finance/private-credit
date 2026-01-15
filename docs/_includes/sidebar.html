@@ -1,0 +1,39 @@
+<nav class="sidebar-nav">
+  {% for item in site.nav %}
+    {% if item.children %}
+      <div class="nav-section{% if page.url contains item.url %} expanded{% endif %}">
+        <button class="nav-section-title" onclick="this.parentElement.classList.toggle('expanded')">
+          {{ item.title }}
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M6 4l4 4-4 4"/></svg>
+        </button>
+        <div class="nav-children">
+          {% for child in item.children %}
+            <a href="{{ child.url | relative_url }}" class="nav-link{% if page.url == child.url %} active{% endif %}">
+              {{ child.title }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <div class="nav-section">
+        <a href="{{ item.url | relative_url }}" class="nav-section-title{% if page.url == item.url %} active{% endif %}">
+          {{ item.title }}
+        </a>
+      </div>
+    {% endif %}
+  {% endfor %}
+</nav>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-expand section containing current page
+  var currentPath = window.location.pathname;
+  document.querySelectorAll('.nav-link').forEach(function(link) {
+    if (currentPath.includes(link.getAttribute('href').replace(/\/$/, ''))) {
+      link.classList.add('active');
+      var section = link.closest('.nav-section');
+      if (section) section.classList.add('expanded');
+    }
+  });
+});
+</script>

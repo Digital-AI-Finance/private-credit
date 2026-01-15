@@ -4,18 +4,11 @@ baseurl: "/private-credit"
 url: "https://digital-ai-finance.github.io"
 repository: Digital-AI-Finance/private-credit
 
-# Theme
-remote_theme: pages-themes/minimal@v0.2.0
+# Plugins
 plugins:
-  - jekyll-remote-theme
   - jekyll-feed
   - jekyll-seo-tag
   - jekyll-sitemap
-
-# Navigation
-header_pages:
-  - getting-started.md
-  - installation.md
 
 # Defaults
 defaults:
@@ -23,6 +16,79 @@ defaults:
       path: ""
     values:
       layout: "default"
+
+# Navigation
+nav:
+  - title: Getting Started
+    url: /getting-started/
+  - title: Installation
+    url: /installation/
+  - title: Architecture
+    children:
+      - title: Overview
+        url: /architecture/
+      - title: Macro VAE
+        url: /architecture/macro-vae/
+      - title: Transition Transformer
+        url: /architecture/transition-transformer/
+      - title: Loan Trajectory
+        url: /architecture/loan-trajectory/
+      - title: Portfolio Aggregator
+        url: /architecture/portfolio-aggregator/
+  - title: Tutorials
+    children:
+      - title: Data Generation
+        url: /tutorials/01-data-generation/
+      - title: Training Models
+        url: /tutorials/02-training-models/
+      - title: Scenario Analysis
+        url: /tutorials/03-scenario-analysis/
+      - title: Portfolio Simulation
+        url: /tutorials/04-portfolio-simulation/
+      - title: Custom Scenarios
+        url: /tutorials/05-custom-scenarios/
+      - title: Calibration
+        url: /tutorials/06-calibration-guide/
+      - title: Model Selection
+        url: /tutorials/07-model-selection/
+      - title: Production
+        url: /tutorials/08-production-deployment/
+  - title: API Reference
+    children:
+      - title: Overview
+        url: /api/
+      - title: Data
+        url: /api/data/
+      - title: Models
+        url: /api/models/
+      - title: Evaluation
+        url: /api/evaluation/
+  - title: Research
+    children:
+      - title: Overview
+        url: /research/
+      - title: Methodology
+        url: /research/methodology/
+      - title: References
+        url: /research/references/
+      - title: VAE Derivation
+        url: /research/math/macro-vae-derivation/
+      - title: Transitions
+        url: /research/math/transition-dynamics/
+      - title: Diffusion
+        url: /research/math/diffusion-head/
+      - title: Waterfall
+        url: /research/math/waterfall-mechanics/
+      - title: Risk Metrics
+        url: /research/math/risk-metrics/
+  - title: Demos
+    children:
+      - title: Scenario Explorer
+        url: /demos/scenario-explorer.html
+      - title: Portfolio Builder
+        url: /demos/portfolio-builder.html
+      - title: Model Comparison
+        url: /demos/model-comparison.html
 
 # SEO
 author: Digital Finance Research
