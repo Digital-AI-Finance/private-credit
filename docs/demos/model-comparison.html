@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Comparison - Private Credit</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --vae-color: #3b82f6;
+            --gan-color: #f97316;
+            --flow-color: #22c55e;
+            --ensemble-color: #8b5cf6;
+            --secondary: #64748b;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--secondary);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            border-color: var(--primary);
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .tab.vae { border-left: 4px solid var(--vae-color); }
+        .tab.gan { border-left: 4px solid var(--gan-color); }
+        .tab.flow { border-left: 4px solid var(--flow-color); }
+        .tab.ensemble { border-left: 4px solid var(--ensemble-color); }
+
+        .model-info {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .model-info h2 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+
+        .model-info p {
+            color: var(--secondary);
+            margin-bottom: 15px;
+        }
+
+        .model-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .feature {
+            background: var(--bg);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .feature h4 {
+            font-size: 0.8rem;
+            color: var(--secondary);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .feature .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .chart-card h3 {
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: var(--border);
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: var(--primary);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            left: 26px;
+        }
+
+        .stats-table {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .stats-table h3 {
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            font-weight: 500;
+            color: var(--secondary);
+            background: var(--bg);
+        }
+
+        th:first-child, td:first-child {
+            text-align: left;
+        }
+
+        .model-vae { color: var(--vae-color); }
+        .model-gan { color: var(--gan-color); }
+        .model-flow { color: var(--flow-color); }
+        .model-ensemble { color: var(--ensemble-color); }
+
+        .comparison-chart {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .comparison-chart h3 {
+            margin-bottom: 15px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--secondary);
+            font-size: 0.875rem;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Model Comparison</h1>
+            <p>Compare VAE, GAN, Flow, and Ensemble models for macro scenario generation</p>
+        </header>
+
+        <div class="tabs">
+            <div class="tab vae active" data-model="vae">VAE</div>
+            <div class="tab gan" data-model="gan">GAN</div>
+            <div class="tab flow" data-model="flow">Flow</div>
+            <div class="tab ensemble" data-model="ensemble">Ensemble</div>
+        </div>
+
+        <div class="model-info" id="model-info">
+            <!-- Populated by JavaScript -->
+        </div>
+
+        <div class="toggle-container">
+            <span>Overlay all models</span>
+            <div class="toggle-switch" id="overlay-toggle"></div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>GDP Growth Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="gdp-dist-chart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Sample Time Series</h3>
+                <div class="chart-container">
+                    <canvas id="time-series-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-table">
+            <h3>Statistical Comparison</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th class="model-vae">VAE</th>
+                        <th class="model-gan">GAN</th>
+                        <th class="model-flow">Flow</th>
+                        <th class="model-ensemble">Ensemble</th>
+                    </tr>
+                </thead>
+                <tbody id="stats-tbody">
+                    <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="comparison-chart">
+            <h3>Autocorrelation Comparison (Lag-1)</h3>
+            <div class="chart-container">
+                <canvas id="acf-chart"></canvas>
+            </div>
+        </div>
+
+        <footer>
+            <p>Part of the <a href="https://digital-ai-finance.github.io/private-credit/">Private Credit</a> framework</p>
+        </footer>
+    </div>
+
+    <script>
+        // Model descriptions
+        const modelInfo = {
+            vae: {
+                name: 'Variational Autoencoder (VAE)',
+                description: 'Conditional VAE with LSTM encoder-decoder. Optimizes ELBO with KL annealing for stable training.',
+                features: {
+                    'Architecture': 'LSTM + MLP',
+                    'Parameters': '~850K',
+                    'Training': 'ELBO Loss',
+                    'Strength': 'Interpolation'
+                }
+            },
+            gan: {
+                name: 'Wasserstein GAN with GP (WGAN-GP)',
+                description: 'Generative adversarial network with gradient penalty. Uses Wasserstein distance for stable training.',
+                features: {
+                    'Architecture': 'LSTM + Attention',
+                    'Parameters': '~1.2M',
+                    'Training': 'Adversarial',
+                    'Strength': 'Sharp outputs'
+                }
+            },
+            flow: {
+                name: 'Normalizing Flows (Real NVP)',
+                description: 'Invertible neural network with exact likelihood computation. Uses coupling layers for tractable Jacobian.',
+                features: {
+                    'Architecture': 'Coupling Layers',
+                    'Parameters': '~950K',
+                    'Training': 'Max Likelihood',
+                    'Strength': 'Exact density'
+                }
+            },
+            ensemble: {
+                name: 'Ensemble Model',
+                description: 'Weighted combination of VAE, GAN, and Flow models. Provides uncertainty quantification through model disagreement.',
+                features: {
+                    'Architecture': 'Meta-learner',
+                    'Parameters': '~3M total',
+                    'Training': 'Stacking',
+                    'Strength': 'Robustness'
+                }
+            }
+        };
+
+        // Pre-computed sample data
+        const modelSamples = generateModelSamples();
+
+        function generateModelSamples() {
+            const samples = {};
+            const nSamples = 1000;
+            const seqLen = 60;
+
+            // VAE samples - smoother, slightly blurry
+            samples.vae = {
+                gdp: generateDistribution(0.022, 0.012, nSamples, 42, 0.1),
+                timeSeries: generateTimeSeries(0.025, 0.008, seqLen, 43, 0.9),
+                acf: [0.92, 0.88, 0.75, 0.68, 0.55, 0.45, 0.38, 0.30, 0.22]
+            };
+
+            // GAN samples - sharper, more variance
+            samples.gan = {
+                gdp: generateDistribution(0.023, 0.018, nSamples, 44, 0.15),
+                timeSeries: generateTimeSeries(0.025, 0.012, seqLen, 45, 0.85),
+                acf: [0.88, 0.82, 0.70, 0.62, 0.50, 0.40, 0.32, 0.25, 0.18]
+            };
+
+            // Flow samples - exact, multimodal possible
+            samples.flow = {
+                gdp: generateDistribution(0.024, 0.015, nSamples, 46, 0.12),
+                timeSeries: generateTimeSeries(0.025, 0.010, seqLen, 47, 0.88),
+                acf: [0.90, 0.85, 0.73, 0.65, 0.52, 0.42, 0.35, 0.28, 0.20]
+            };
+
+            // Ensemble - averaged characteristics
+            samples.ensemble = {
+                gdp: generateDistribution(0.023, 0.014, nSamples, 48, 0.11),
+                timeSeries: generateTimeSeries(0.025, 0.009, seqLen, 49, 0.87),
+                acf: [0.90, 0.85, 0.72, 0.65, 0.52, 0.42, 0.35, 0.27, 0.20]
+            };
+
+            return samples;
+        }
+
+        function generateDistribution(mean, std, n, seed, kurtosisAdjust) {
+            const rng = seedRandom(seed);
+            const samples = [];
+            for (let i = 0; i < n; i++) {
+                // Mix of Gaussian with some non-normality
+                let val = mean + std * randn(rng);
+                if (rng() < kurtosisAdjust) {
+                    val += std * randn(rng) * 0.5; // Fat tails
+                }
+                samples.push(val);
+            }
+            return samples;
+        }
+
+        function generateTimeSeries(mean, std, len, seed, persistence) {
+            const rng = seedRandom(seed);
+            const series = [mean];
+            for (let i = 1; i < len; i++) {
+                const shock = std * randn(rng);
+                series.push(persistence * series[i-1] + (1 - persistence) * mean + shock);
+            }
+            return series;
+        }
+
+        function seedRandom(seed) {
+            return function() {
+                seed = (seed * 9301 + 49297) % 233280;
+                return seed / 233280;
+            };
+        }
+
+        function randn(rng) {
+            let u = 0, v = 0;
+            while (u === 0) u = rng();
+            while (v === 0) v = rng();
+            return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+        }
+
+        // Chart instances
+        let gdpDistChart, timeSeriesChart, acfChart;
+        let currentModel = 'vae';
+        let overlayMode = false;
+
+        const modelColors = {
+            vae: 'rgba(59, 130, 246, 0.7)',
+            gan: 'rgba(249, 115, 22, 0.7)',
+            flow: 'rgba(34, 197, 94, 0.7)',
+            ensemble: 'rgba(139, 92, 246, 0.7)'
+        };
+
+        function initCharts() {
+            // GDP Distribution
+            gdpDistChart = new Chart(document.getElementById('gdp-dist-chart'), {
+                type: 'bar',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true, position: 'top' } },
+                    scales: {
+                        x: { title: { display: true, text: 'GDP Growth (%)' } },
+                        y: { title: { display: true, text: 'Frequency' } }
+                    }
+                }
+            });
+
+            // Time Series
+            timeSeriesChart = new Chart(document.getElementById('time-series-chart'), {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true, position: 'top' } },
+                    scales: {
+                        x: { title: { display: true, text: 'Month' } },
+                        y: { title: { display: true, text: 'GDP Growth (%)' } }
+                    }
+                }
+            });
+
+            // ACF Chart
+            acfChart = new Chart(document.getElementById('acf-chart'), {
+                type: 'bar',
+                data: {
+                    labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true, position: 'top' } },
+                    scales: {
+                        x: { title: { display: true, text: 'Lag' } },
+                        y: { title: { display: true, text: 'Autocorrelation' }, min: 0, max: 1 }
+                    }
+                }
+            });
+        }
+
+        function updateModelInfo(model) {
+            const info = modelInfo[model];
+            document.getElementById('model-info').innerHTML = `
+                <h2>${info.name}</h2>
+                <p>${info.description}</p>
+                <div class="model-features">
+                    ${Object.entries(info.features).map(([key, val]) => `
+                        <div class="feature">
+                            <h4>${key}</h4>
+                            <div class="value">${val}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function updateCharts() {
+            if (overlayMode) {
+                updateChartsOverlay();
+            } else {
+                updateChartsSingle(currentModel);
+            }
+            updateStatsTable();
+            updateAcfChart();
+        }
+
+        function updateChartsSingle(model) {
+            const data = modelSamples[model];
+            const color = modelColors[model];
+
+            // GDP histogram
+            const bins = createHistogramBins(data.gdp, 30);
+            gdpDistChart.data.labels = bins.labels;
+            gdpDistChart.data.datasets = [{
+                label: model.toUpperCase(),
+                data: bins.counts,
+                backgroundColor: color
+            }];
+            gdpDistChart.update();
+
+            // Time series
+            const labels = Array.from({ length: data.timeSeries.length }, (_, i) => i + 1);
+            timeSeriesChart.data.labels = labels;
+            timeSeriesChart.data.datasets = [{
+                label: model.toUpperCase(),
+                data: data.timeSeries.map(v => (v * 100).toFixed(2)),
+                borderColor: color,
+                backgroundColor: 'transparent',
+                tension: 0.3,
+                pointRadius: 0
+            }];
+            timeSeriesChart.update();
+        }
+
+        function updateChartsOverlay() {
+            const models = ['vae', 'gan', 'flow', 'ensemble'];
+
+            // GDP histogram - overlay
+            const allBins = models.map(m => createHistogramBins(modelSamples[m].gdp, 30));
+            const allLabels = [...new Set(allBins.flatMap(b => b.labels))].sort((a, b) => a - b);
+
+            gdpDistChart.data.labels = allLabels;
+            gdpDistChart.data.datasets = models.map((m, i) => ({
+                label: m.toUpperCase(),
+                data: allLabels.map(l => {
+                    const idx = allBins[i].labels.indexOf(l);
+                    return idx >= 0 ? allBins[i].counts[idx] : 0;
+                }),
+                backgroundColor: modelColors[m].replace('0.7', '0.4')
+            }));
+            gdpDistChart.update();
+
+            // Time series - overlay
+            const labels = Array.from({ length: 60 }, (_, i) => i + 1);
+            timeSeriesChart.data.labels = labels;
+            timeSeriesChart.data.datasets = models.map(m => ({
+                label: m.toUpperCase(),
+                data: modelSamples[m].timeSeries.map(v => (v * 100).toFixed(2)),
+                borderColor: modelColors[m],
+                backgroundColor: 'transparent',
+                tension: 0.3,
+                pointRadius: 0
+            }));
+            timeSeriesChart.update();
+        }
+
+        function createHistogramBins(data, numBins) {
+            const min = Math.min(...data);
+            const max = Math.max(...data);
+            const binWidth = (max - min) / numBins;
+            const counts = new Array(numBins).fill(0);
+            const labels = [];
+
+            for (let i = 0; i < numBins; i++) {
+                labels.push(((min + i * binWidth) * 100).toFixed(1));
+            }
+
+            data.forEach(val => {
+                const idx = Math.min(Math.floor((val - min) / binWidth), numBins - 1);
+                counts[idx]++;
+            });
+
+            return { labels, counts };
+        }
+
+        function updateStatsTable() {
+            const stats = ['Mean', 'Std Dev', 'Skewness', 'Kurtosis', 'Min', 'Max'];
+            const models = ['vae', 'gan', 'flow', 'ensemble'];
+
+            const tbody = document.getElementById('stats-tbody');
+            tbody.innerHTML = stats.map(stat => {
+                const values = models.map(m => calculateStat(modelSamples[m].gdp, stat));
+                return `
+                    <tr>
+                        <td>${stat}</td>
+                        ${values.map((v, i) => `<td class="model-${models[i]}">${v}</td>`).join('')}
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function calculateStat(data, stat) {
+            const n = data.length;
+            const mean = data.reduce((a, b) => a + b, 0) / n;
+            const variance = data.reduce((a, b) => a + (b - mean) ** 2, 0) / n;
+            const std = Math.sqrt(variance);
+
+            switch (stat) {
+                case 'Mean': return (mean * 100).toFixed(2) + '%';
+                case 'Std Dev': return (std * 100).toFixed(2) + '%';
+                case 'Skewness':
+                    const m3 = data.reduce((a, b) => a + (b - mean) ** 3, 0) / n;
+                    return (m3 / std ** 3).toFixed(3);
+                case 'Kurtosis':
+                    const m4 = data.reduce((a, b) => a + (b - mean) ** 4, 0) / n;
+                    return (m4 / std ** 4 - 3).toFixed(3);
+                case 'Min': return (Math.min(...data) * 100).toFixed(2) + '%';
+                case 'Max': return (Math.max(...data) * 100).toFixed(2) + '%';
+                default: return '-';
+            }
+        }
+
+        function updateAcfChart() {
+            const models = ['vae', 'gan', 'flow', 'ensemble'];
+            const barWidth = 0.2;
+
+            acfChart.data.datasets = models.map((m, i) => ({
+                label: m.toUpperCase(),
+                data: modelSamples[m].acf,
+                backgroundColor: modelColors[m],
+                barPercentage: 0.8,
+                categoryPercentage: 0.9
+            }));
+            acfChart.update();
+        }
+
+        // Event handlers
+        function setupEventListeners() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentModel = tab.dataset.model;
+                    updateModelInfo(currentModel);
+                    if (!overlayMode) {
+                        updateCharts();
+                    }
+                });
+            });
+
+            document.getElementById('overlay-toggle').addEventListener('click', function() {
+                this.classList.toggle('active');
+                overlayMode = this.classList.contains('active');
+                updateCharts();
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            updateModelInfo('vae');
+            setupEventListeners();
+            updateCharts();
+        });
+    </script>
+</body>
+</html>

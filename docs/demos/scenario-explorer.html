@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Macro Scenario Explorer - Private Credit</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #64748b;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--secondary);
+        }
+
+        .controls {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--secondary);
+        }
+
+        select {
+            padding: 10px 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--card-bg);
+            cursor: pointer;
+            min-width: 200px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 0.875rem;
+            color: var(--secondary);
+            margin-bottom: 5px;
+        }
+
+        .stat-card .value {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .stat-card .change {
+            font-size: 0.875rem;
+            margin-top: 5px;
+        }
+
+        .change.positive { color: var(--success); }
+        .change.negative { color: var(--danger); }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .chart-card h3 {
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .correlation-section {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .correlation-section h3 {
+            margin-bottom: 15px;
+        }
+
+        .heatmap-container {
+            overflow-x: auto;
+        }
+
+        table.heatmap {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.8rem;
+        }
+
+        table.heatmap th,
+        table.heatmap td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        table.heatmap th {
+            background: var(--bg);
+            font-weight: 500;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--secondary);
+            font-size: 0.875rem;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Macro Scenario Explorer</h1>
+            <p>Interactive visualization of economic scenarios for credit risk modeling</p>
+        </header>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="scenario-select">Select Scenario</label>
+                <select id="scenario-select">
+                    <option value="baseline">Baseline</option>
+                    <option value="adverse">Adverse</option>
+                    <option value="severely_adverse">Severely Adverse</option>
+                    <option value="stagflation">Stagflation</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="horizon-select">Time Horizon</label>
+                <select id="horizon-select">
+                    <option value="60">60 Months</option>
+                    <option value="36">36 Months</option>
+                    <option value="24">24 Months</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="stats-grid" id="stats-grid">
+            <!-- Populated by JavaScript -->
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>GDP Growth (YoY %)</h3>
+                <div class="chart-container">
+                    <canvas id="gdp-chart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Unemployment Rate (%)</h3>
+                <div class="chart-container">
+                    <canvas id="unemployment-chart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Inflation Rate (YoY %)</h3>
+                <div class="chart-container">
+                    <canvas id="inflation-chart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>HY Credit Spread (bps)</h3>
+                <div class="chart-container">
+                    <canvas id="spread-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="correlation-section">
+            <h3>Variable Correlation Matrix</h3>
+            <div class="heatmap-container" id="heatmap-container">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <footer>
+            <p>Part of the <a href="https://digital-ai-finance.github.io/private-credit/">Private Credit</a> framework</p>
+        </footer>
+    </div>
+
+    <script>
+        // Pre-computed scenario data (60 months each)
+        const scenarioData = {
+            baseline: {
+                gdp: generateSeries(0.025, 0.005, 60, 42),
+                unemployment: generateSeries(0.04, 0.003, 60, 43, true),
+                inflation: generateSeries(0.02, 0.004, 60, 44),
+                spread: generateSeries(400, 50, 60, 45),
+                correlation: [
+                    [1.00, -0.65, 0.20, -0.45],
+                    [-0.65, 1.00, -0.10, 0.55],
+                    [0.20, -0.10, 1.00, 0.15],
+                    [-0.45, 0.55, 0.15, 1.00]
+                ]
+            },
+            adverse: {
+                gdp: generateAdverseSeries('gdp', 60),
+                unemployment: generateAdverseSeries('unemployment', 60),
+                inflation: generateAdverseSeries('inflation', 60),
+                spread: generateAdverseSeries('spread', 60),
+                correlation: [
+                    [1.00, -0.75, 0.30, -0.60],
+                    [-0.75, 1.00, -0.05, 0.70],
+                    [0.30, -0.05, 1.00, 0.25],
+                    [-0.60, 0.70, 0.25, 1.00]
+                ]
+            },
+            severely_adverse: {
+                gdp: generateSevereAdverseSeries('gdp', 60),
+                unemployment: generateSevereAdverseSeries('unemployment', 60),
+                inflation: generateSevereAdverseSeries('inflation', 60),
+                spread: generateSevereAdverseSeries('spread', 60),
+                correlation: [
+                    [1.00, -0.85, 0.35, -0.75],
+                    [-0.85, 1.00, 0.00, 0.80],
+                    [0.35, 0.00, 1.00, 0.30],
+                    [-0.75, 0.80, 0.30, 1.00]
+                ]
+            },
+            stagflation: {
+                gdp: generateStagflationSeries('gdp', 60),
+                unemployment: generateStagflationSeries('unemployment', 60),
+                inflation: generateStagflationSeries('inflation', 60),
+                spread: generateStagflationSeries('spread', 60),
+                correlation: [
+                    [1.00, -0.50, -0.40, -0.55],
+                    [-0.50, 1.00, 0.30, 0.60],
+                    [-0.40, 0.30, 1.00, 0.45],
+                    [-0.55, 0.60, 0.45, 1.00]
+                ]
+            }
+        };
+
+        function generateSeries(mean, std, length, seed, bounded = false) {
+            const rng = seedRandom(seed);
+            const series = [];
+            let value = mean;
+            for (let i = 0; i < length; i++) {
+                value += (rng() - 0.5) * std * 2;
+                value = value * 0.95 + mean * 0.05; // Mean reversion
+                if (bounded) value = Math.max(0.02, value);
+                series.push(value);
+            }
+            return series;
+        }
+
+        function generateAdverseSeries(variable, length) {
+            const series = [];
+            for (let i = 0; i < length; i++) {
+                const t = i / length;
+                switch(variable) {
+                    case 'gdp':
+                        series.push(0.02 - 0.04 * Math.sin(Math.PI * t * 0.5) + (Math.random() - 0.5) * 0.005);
+                        break;
+                    case 'unemployment':
+                        series.push(0.04 + 0.04 * Math.sin(Math.PI * t * 0.5) + (Math.random() - 0.5) * 0.003);
+                        break;
+                    case 'inflation':
+                        series.push(0.015 + (Math.random() - 0.5) * 0.005);
+                        break;
+                    case 'spread':
+                        series.push(400 + 300 * Math.sin(Math.PI * t * 0.5) + (Math.random() - 0.5) * 30);
+                        break;
+                }
+            }
+            return series;
+        }
+
+        function generateSevereAdverseSeries(variable, length) {
+            const series = [];
+            for (let i = 0; i < length; i++) {
+                const t = i / length;
+                switch(variable) {
+                    case 'gdp':
+                        series.push(0.02 - 0.08 * Math.sin(Math.PI * t * 0.4) + (Math.random() - 0.5) * 0.008);
+                        break;
+                    case 'unemployment':
+                        series.push(0.04 + 0.08 * Math.sin(Math.PI * t * 0.4) + (Math.random() - 0.5) * 0.005);
+                        break;
+                    case 'inflation':
+                        series.push(0.01 + 0.01 * t + (Math.random() - 0.5) * 0.004);
+                        break;
+                    case 'spread':
+                        series.push(400 + 600 * Math.sin(Math.PI * t * 0.4) + (Math.random() - 0.5) * 50);
+                        break;
+                }
+            }
+            return series;
+        }
+
+        function generateStagflationSeries(variable, length) {
+            const series = [];
+            for (let i = 0; i < length; i++) {
+                const t = i / length;
+                switch(variable) {
+                    case 'gdp':
+                        series.push(0.005 + (Math.random() - 0.5) * 0.008);
+                        break;
+                    case 'unemployment':
+                        series.push(0.05 + 0.03 * t + (Math.random() - 0.5) * 0.004);
+                        break;
+                    case 'inflation':
+                        series.push(0.04 + 0.03 * t + (Math.random() - 0.5) * 0.006);
+                        break;
+                    case 'spread':
+                        series.push(500 + 200 * t + (Math.random() - 0.5) * 40);
+                        break;
+                }
+            }
+            return series;
+        }
+
+        function seedRandom(seed) {
+            return function() {
+                seed = (seed * 9301 + 49297) % 233280;
+                return seed / 233280;
+            };
+        }
+
+        // Chart instances
+        let gdpChart, unemploymentChart, inflationChart, spreadChart;
+
+        function initCharts() {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Month' },
+                        grid: { display: false }
+                    },
+                    y: {
+                        grid: { color: '#e2e8f0' }
+                    }
+                }
+            };
+
+            gdpChart = new Chart(document.getElementById('gdp-chart'), {
+                type: 'line',
+                data: { labels: [], datasets: [{ data: [], borderColor: '#2563eb', tension: 0.3, borderWidth: 2, pointRadius: 0 }] },
+                options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, title: { display: true, text: '%' } } } }
+            });
+
+            unemploymentChart = new Chart(document.getElementById('unemployment-chart'), {
+                type: 'line',
+                data: { labels: [], datasets: [{ data: [], borderColor: '#ef4444', tension: 0.3, borderWidth: 2, pointRadius: 0 }] },
+                options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, title: { display: true, text: '%' } } } }
+            });
+
+            inflationChart = new Chart(document.getElementById('inflation-chart'), {
+                type: 'line',
+                data: { labels: [], datasets: [{ data: [], borderColor: '#f59e0b', tension: 0.3, borderWidth: 2, pointRadius: 0 }] },
+                options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, title: { display: true, text: '%' } } } }
+            });
+
+            spreadChart = new Chart(document.getElementById('spread-chart'), {
+                type: 'line',
+                data: { labels: [], datasets: [{ data: [], borderColor: '#22c55e', tension: 0.3, borderWidth: 2, pointRadius: 0 }] },
+                options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, title: { display: true, text: 'bps' } } } }
+            });
+        }
+
+        function updateCharts(scenario, horizon) {
+            const data = scenarioData[scenario];
+            const labels = Array.from({ length: horizon }, (_, i) => i + 1);
+
+            // Update GDP chart
+            gdpChart.data.labels = labels;
+            gdpChart.data.datasets[0].data = data.gdp.slice(0, horizon).map(v => (v * 100).toFixed(2));
+            gdpChart.update();
+
+            // Update Unemployment chart
+            unemploymentChart.data.labels = labels;
+            unemploymentChart.data.datasets[0].data = data.unemployment.slice(0, horizon).map(v => (v * 100).toFixed(2));
+            unemploymentChart.update();
+
+            // Update Inflation chart
+            inflationChart.data.labels = labels;
+            inflationChart.data.datasets[0].data = data.inflation.slice(0, horizon).map(v => (v * 100).toFixed(2));
+            inflationChart.update();
+
+            // Update Spread chart
+            spreadChart.data.labels = labels;
+            spreadChart.data.datasets[0].data = data.spread.slice(0, horizon).map(v => v.toFixed(0));
+            spreadChart.update();
+        }
+
+        function updateStats(scenario, horizon) {
+            const data = scenarioData[scenario];
+            const baseline = scenarioData.baseline;
+
+            const stats = [
+                {
+                    name: 'Avg GDP Growth',
+                    value: (data.gdp.slice(0, horizon).reduce((a, b) => a + b, 0) / horizon * 100).toFixed(2) + '%',
+                    baseline: (baseline.gdp.slice(0, horizon).reduce((a, b) => a + b, 0) / horizon * 100).toFixed(2),
+                    current: (data.gdp.slice(0, horizon).reduce((a, b) => a + b, 0) / horizon * 100)
+                },
+                {
+                    name: 'Peak Unemployment',
+                    value: (Math.max(...data.unemployment.slice(0, horizon)) * 100).toFixed(1) + '%',
+                    baseline: Math.max(...baseline.unemployment.slice(0, horizon)) * 100,
+                    current: Math.max(...data.unemployment.slice(0, horizon)) * 100
+                },
+                {
+                    name: 'Avg Inflation',
+                    value: (data.inflation.slice(0, horizon).reduce((a, b) => a + b, 0) / horizon * 100).toFixed(2) + '%',
+                    baseline: baseline.inflation.slice(0, horizon).reduce((a, b) => a + b, 0) / horizon * 100,
+                    current: data.inflation.slice(0, horizon).reduce((a, b) => a + b, 0) / horizon * 100
+                },
+                {
+                    name: 'Peak HY Spread',
+                    value: Math.max(...data.spread.slice(0, horizon)).toFixed(0) + ' bps',
+                    baseline: Math.max(...baseline.spread.slice(0, horizon)),
+                    current: Math.max(...data.spread.slice(0, horizon))
+                }
+            ];
+
+            const grid = document.getElementById('stats-grid');
+            grid.innerHTML = stats.map(stat => {
+                const diff = stat.current - stat.baseline;
+                const isPositive = stat.name === 'Avg GDP Growth' ? diff > 0 : diff < 0;
+                const changeClass = isPositive ? 'positive' : 'negative';
+                const sign = diff > 0 ? '+' : '';
+                return `
+                    <div class="stat-card">
+                        <h3>${stat.name}</h3>
+                        <div class="value">${stat.value}</div>
+                        <div class="change ${changeClass}">${sign}${diff.toFixed(2)} vs baseline</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateCorrelationHeatmap(scenario) {
+            const data = scenarioData[scenario];
+            const variables = ['GDP', 'Unemp', 'Infl', 'Spread'];
+
+            function getColor(value) {
+                const r = value < 0 ? 255 : Math.round(255 * (1 - value));
+                const g = Math.round(255 * (1 - Math.abs(value)));
+                const b = value > 0 ? 255 : Math.round(255 * (1 + value));
+                return `rgb(${r}, ${g}, ${b})`;
+            }
+
+            let html = '<table class="heatmap"><tr><th></th>';
+            variables.forEach(v => html += `<th>${v}</th>`);
+            html += '</tr>';
+
+            data.correlation.forEach((row, i) => {
+                html += `<tr><th>${variables[i]}</th>`;
+                row.forEach(val => {
+                    html += `<td style="background: ${getColor(val)}">${val.toFixed(2)}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</table>';
+
+            document.getElementById('heatmap-container').innerHTML = html;
+        }
+
+        function updateAll() {
+            const scenario = document.getElementById('scenario-select').value;
+            const horizon = parseInt(document.getElementById('horizon-select').value);
+            updateCharts(scenario, horizon);
+            updateStats(scenario, horizon);
+            updateCorrelationHeatmap(scenario);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            updateAll();
+
+            document.getElementById('scenario-select').addEventListener('change', updateAll);
+            document.getElementById('horizon-select').addEventListener('change', updateAll);
+        });
+    </script>
+</body>
+</html>

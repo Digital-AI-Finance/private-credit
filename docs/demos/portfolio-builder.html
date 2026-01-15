@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Builder - Private Credit</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #64748b;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--secondary);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1000px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .controls-panel {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .controls-panel h2 {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--secondary);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            appearance: none;
+            background: var(--border);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .slider-value {
+            min-width: 80px;
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .section-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--secondary);
+            text-transform: uppercase;
+            margin: 25px 0 15px;
+            letter-spacing: 0.05em;
+        }
+
+        .results-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        @media (max-width: 800px) {
+            .metrics-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .metric-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .metric-card h3 {
+            font-size: 0.75rem;
+            color: var(--secondary);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .metric-card .value {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .metric-card .subtext {
+            font-size: 0.8rem;
+            color: var(--secondary);
+            margin-top: 3px;
+        }
+
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 800px) {
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .chart-card h3 {
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 280px;
+        }
+
+        .tranche-table {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .tranche-table h3 {
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            text-align: left;
+            font-weight: 500;
+            color: var(--secondary);
+        }
+
+        td:first-child {
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .rating-aaa { color: #22c55e; }
+        .rating-aa { color: #84cc16; }
+        .rating-a { color: #eab308; }
+        .rating-bbb { color: #f59e0b; }
+        .rating-bb { color: #f97316; }
+        .rating-equity { color: #ef4444; }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--secondary);
+            font-size: 0.875rem;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .calculate-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Portfolio Builder</h1>
+            <p>Configure portfolio parameters and simulate loss distributions</p>
+        </header>
+
+        <div class="main-grid">
+            <div class="controls-panel">
+                <h2>Portfolio Configuration</h2>
+
+                <div class="section-title">Portfolio Size</div>
+
+                <div class="control-group">
+                    <label>Number of Loans</label>
+                    <div class="slider-container">
+                        <input type="range" id="num-loans" min="100" max="2000" step="100" value="500">
+                        <span class="slider-value" id="num-loans-value">500</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Average Balance ($K)</label>
+                    <div class="slider-container">
+                        <input type="range" id="avg-balance" min="50" max="500" step="25" value="200">
+                        <span class="slider-value" id="avg-balance-value">$200K</span>
+                    </div>
+                </div>
+
+                <div class="section-title">Asset Class Mix</div>
+
+                <div class="control-group">
+                    <label>Corporate Loans (%)</label>
+                    <div class="slider-container">
+                        <input type="range" id="corporate" min="0" max="100" step="5" value="40">
+                        <span class="slider-value" id="corporate-value">40%</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Consumer Loans (%)</label>
+                    <div class="slider-container">
+                        <input type="range" id="consumer" min="0" max="100" step="5" value="25">
+                        <span class="slider-value" id="consumer-value">25%</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Real Estate (%)</label>
+                    <div class="slider-container">
+                        <input type="range" id="realestate" min="0" max="100" step="5" value="20">
+                        <span class="slider-value" id="realestate-value">20%</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Receivables (%)</label>
+                    <div class="slider-container">
+                        <input type="range" id="receivables" min="0" max="100" step="5" value="15">
+                        <span class="slider-value" id="receivables-value">15%</span>
+                    </div>
+                </div>
+
+                <div class="section-title">Risk Parameters</div>
+
+                <div class="control-group">
+                    <label>Asset Correlation</label>
+                    <div class="slider-container">
+                        <input type="range" id="correlation" min="0.05" max="0.30" step="0.01" value="0.15">
+                        <span class="slider-value" id="correlation-value">0.15</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>LGD (%)</label>
+                    <div class="slider-container">
+                        <input type="range" id="lgd" min="20" max="60" step="5" value="40">
+                        <span class="slider-value" id="lgd-value">40%</span>
+                    </div>
+                </div>
+
+                <button class="calculate-btn" onclick="runSimulation()">Run Monte Carlo (10,000 sims)</button>
+            </div>
+
+            <div class="results-panel">
+                <div class="metrics-row">
+                    <div class="metric-card">
+                        <h3>Portfolio Size</h3>
+                        <div class="value" id="portfolio-size">$100M</div>
+                        <div class="subtext" id="loan-count">500 loans</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Expected Loss</h3>
+                        <div class="value" id="expected-loss">$1.2M</div>
+                        <div class="subtext" id="el-rate">1.2% of portfolio</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>VaR (99%)</h3>
+                        <div class="value" id="var-99">$3.6M</div>
+                        <div class="subtext" id="var-rate">3.6% of portfolio</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>CVaR (99%)</h3>
+                        <div class="value" id="cvar-99">$4.8M</div>
+                        <div class="subtext" id="cvar-rate">4.8% of portfolio</div>
+                    </div>
+                </div>
+
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <h3>Loss Distribution</h3>
+                        <div class="chart-container">
+                            <canvas id="loss-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Tranche Waterfall</h3>
+                        <div class="chart-container">
+                            <canvas id="waterfall-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tranche-table">
+                    <h3>Tranche Analysis</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tranche</th>
+                                <th>Size</th>
+                                <th>Attachment</th>
+                                <th>Detachment</th>
+                                <th>Exp. Loss</th>
+                                <th>Loss Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tranche-tbody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Part of the <a href="https://digital-ai-finance.github.io/private-credit/">Private Credit</a> framework</p>
+        </footer>
+    </div>
+
+    <script>
+        // Chart instances
+        let lossChart, waterfallChart;
+
+        // Asset class default rates
+        const assetClassPD = {
+            corporate: 0.02,
+            consumer: 0.04,
+            realestate: 0.015,
+            receivables: 0.03
+        };
+
+        // Tranche structure
+        const tranches = [
+            { name: 'AAA', attachment: 0.30, detachment: 1.00, rating: 'aaa' },
+            { name: 'AA', attachment: 0.22, detachment: 0.30, rating: 'aa' },
+            { name: 'A', attachment: 0.16, detachment: 0.22, rating: 'a' },
+            { name: 'BBB', attachment: 0.10, detachment: 0.16, rating: 'bbb' },
+            { name: 'BB', attachment: 0.05, detachment: 0.10, rating: 'bb' },
+            { name: 'Equity', attachment: 0.00, detachment: 0.05, rating: 'equity' }
+        ];
+
+        function initCharts() {
+            // Loss distribution chart
+            lossChart = new Chart(document.getElementById('loss-chart'), {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: 'rgba(37, 99, 235, 0.6)',
+                        borderColor: 'rgba(37, 99, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {
+                            annotations: {}
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Loss Rate (%)' },
+                            grid: { display: false }
+                        },
+                        y: {
+                            title: { display: true, text: 'Frequency' },
+                            grid: { color: '#e2e8f0' }
+                        }
+                    }
+                }
+            });
+
+            // Waterfall chart
+            waterfallChart = new Chart(document.getElementById('waterfall-chart'), {
+                type: 'bar',
+                data: {
+                    labels: tranches.map(t => t.name),
+                    datasets: [
+                        {
+                            label: 'Protected',
+                            data: [],
+                            backgroundColor: 'rgba(34, 197, 94, 0.6)'
+                        },
+                        {
+                            label: 'At Risk',
+                            data: [],
+                            backgroundColor: 'rgba(239, 68, 68, 0.6)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        x: { stacked: true },
+                        y: {
+                            stacked: true,
+                            title: { display: true, text: 'Tranche Size ($M)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getParams() {
+            return {
+                numLoans: parseInt(document.getElementById('num-loans').value),
+                avgBalance: parseFloat(document.getElementById('avg-balance').value) * 1000,
+                corporate: parseFloat(document.getElementById('corporate').value) / 100,
+                consumer: parseFloat(document.getElementById('consumer').value) / 100,
+                realestate: parseFloat(document.getElementById('realestate').value) / 100,
+                receivables: parseFloat(document.getElementById('receivables').value) / 100,
+                correlation: parseFloat(document.getElementById('correlation').value),
+                lgd: parseFloat(document.getElementById('lgd').value) / 100
+            };
+        }
+
+        function calculateWeightedPD(params) {
+            const total = params.corporate + params.consumer + params.realestate + params.receivables;
+            if (total === 0) return 0.025;
+            return (
+                params.corporate * assetClassPD.corporate +
+                params.consumer * assetClassPD.consumer +
+                params.realestate * assetClassPD.realestate +
+                params.receivables * assetClassPD.receivables
+            ) / total;
+        }
+
+        function runSimulation() {
+            const params = getParams();
+            const portfolioSize = params.numLoans * params.avgBalance;
+            const weightedPD = calculateWeightedPD(params);
+            const nSims = 10000;
+
+            // Vasicek model simulation
+            const losses = [];
+            for (let s = 0; s < nSims; s++) {
+                // Systematic factor
+                const Z = randn();
+
+                // Conditional default probability
+                const conditionalPD = normalCDF(
+                    (normalInvCDF(weightedPD) - Math.sqrt(params.correlation) * Z) /
+                    Math.sqrt(1 - params.correlation)
+                );
+
+                // Expected loss
+                const lossRate = conditionalPD * params.lgd;
+                losses.push(lossRate * portfolioSize);
+            }
+
+            // Sort for percentiles
+            losses.sort((a, b) => a - b);
+
+            // Calculate statistics
+            const expectedLoss = losses.reduce((a, b) => a + b, 0) / nSims;
+            const var95 = losses[Math.floor(nSims * 0.95)];
+            const var99 = losses[Math.floor(nSims * 0.99)];
+            const cvar99 = losses.slice(Math.floor(nSims * 0.99)).reduce((a, b) => a + b, 0) / (nSims * 0.01);
+
+            // Update metrics
+            document.getElementById('portfolio-size').textContent = formatCurrency(portfolioSize);
+            document.getElementById('loan-count').textContent = `${params.numLoans} loans`;
+            document.getElementById('expected-loss').textContent = formatCurrency(expectedLoss);
+            document.getElementById('el-rate').textContent = `${(expectedLoss / portfolioSize * 100).toFixed(2)}% of portfolio`;
+            document.getElementById('var-99').textContent = formatCurrency(var99);
+            document.getElementById('var-rate').textContent = `${(var99 / portfolioSize * 100).toFixed(2)}% of portfolio`;
+            document.getElementById('cvar-99').textContent = formatCurrency(cvar99);
+            document.getElementById('cvar-rate').textContent = `${(cvar99 / portfolioSize * 100).toFixed(2)}% of portfolio`;
+
+            // Update loss distribution chart
+            const maxLossRate = Math.max(...losses) / portfolioSize * 100;
+            const binWidth = Math.max(0.5, Math.ceil(maxLossRate / 20) * 0.5);
+            const bins = {};
+            for (let i = 0; i <= Math.ceil(maxLossRate / binWidth); i++) {
+                bins[i * binWidth] = 0;
+            }
+            losses.forEach(loss => {
+                const rate = loss / portfolioSize * 100;
+                const bin = Math.floor(rate / binWidth) * binWidth;
+                if (bins[bin] !== undefined) bins[bin]++;
+            });
+
+            const labels = Object.keys(bins).map(k => parseFloat(k).toFixed(1));
+            const counts = Object.values(bins);
+
+            lossChart.data.labels = labels;
+            lossChart.data.datasets[0].data = counts;
+            lossChart.update();
+
+            // Update waterfall chart
+            const var99Rate = var99 / portfolioSize;
+            const trancheProtected = [];
+            const trancheAtRisk = [];
+
+            tranches.forEach(t => {
+                const size = (t.detachment - t.attachment) * portfolioSize;
+                if (var99Rate <= t.attachment) {
+                    trancheProtected.push(size / 1e6);
+                    trancheAtRisk.push(0);
+                } else if (var99Rate >= t.detachment) {
+                    trancheProtected.push(0);
+                    trancheAtRisk.push(size / 1e6);
+                } else {
+                    const lossInTranche = (var99Rate - t.attachment) / (t.detachment - t.attachment);
+                    trancheAtRisk.push(lossInTranche * size / 1e6);
+                    trancheProtected.push((1 - lossInTranche) * size / 1e6);
+                }
+            });
+
+            waterfallChart.data.datasets[0].data = trancheProtected;
+            waterfallChart.data.datasets[1].data = trancheAtRisk;
+            waterfallChart.update();
+
+            // Update tranche table
+            const tbody = document.getElementById('tranche-tbody');
+            tbody.innerHTML = tranches.map(t => {
+                const size = (t.detachment - t.attachment) * portfolioSize;
+                const expLoss = calculateTrancheExpectedLoss(losses, t.attachment, t.detachment, portfolioSize);
+                const lossRate = expLoss / size * 100;
+                return `
+                    <tr>
+                        <td class="rating-${t.rating}">${t.name}</td>
+                        <td>${formatCurrency(size)}</td>
+                        <td>${(t.attachment * 100).toFixed(0)}%</td>
+                        <td>${(t.detachment * 100).toFixed(0)}%</td>
+                        <td>${formatCurrency(expLoss)}</td>
+                        <td>${lossRate.toFixed(2)}%</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function calculateTrancheExpectedLoss(losses, attachment, detachment, portfolioSize) {
+            let totalLoss = 0;
+            losses.forEach(loss => {
+                const lossRate = loss / portfolioSize;
+                let trancheLoss = 0;
+                if (lossRate > attachment) {
+                    trancheLoss = Math.min(lossRate, detachment) - attachment;
+                }
+                totalLoss += trancheLoss * portfolioSize;
+            });
+            return totalLoss / losses.length;
+        }
+
+        function formatCurrency(value) {
+            if (value >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
+            if (value >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;
+            if (value >= 1e3) return `$${(value / 1e3).toFixed(0)}K`;
+            return `$${value.toFixed(0)}`;
+        }
+
+        // Standard normal distribution functions
+        function randn() {
+            let u = 0, v = 0;
+            while (u === 0) u = Math.random();
+            while (v === 0) v = Math.random();
+            return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+        }
+
+        function normalCDF(x) {
+            const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+            const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+            const sign = x < 0 ? -1 : 1;
+            x = Math.abs(x) / Math.sqrt(2);
+            const t = 1.0 / (1.0 + p * x);
+            const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+            return 0.5 * (1.0 + sign * y);
+        }
+
+        function normalInvCDF(p) {
+            // Approximation for inverse normal CDF
+            if (p <= 0) return -Infinity;
+            if (p >= 1) return Infinity;
+            if (p === 0.5) return 0;
+
+            const a = [-3.969683028665376e+01, 2.209460984245205e+02,
+                      -2.759285104469687e+02, 1.383577518672690e+02,
+                      -3.066479806614716e+01, 2.506628277459239e+00];
+            const b = [-5.447609879822406e+01, 1.615858368580409e+02,
+                      -1.556989798598866e+02, 6.680131188771972e+01,
+                      -1.328068155288572e+01];
+            const c = [-7.784894002430293e-03, -3.223964580411365e-01,
+                      -2.400758277161838e+00, -2.549732539343734e+00,
+                       4.374664141464968e+00, 2.938163982698783e+00];
+            const d = [7.784695709041462e-03, 3.224671290700398e-01,
+                       2.445134137142996e+00, 3.754408661907416e+00];
+
+            const pLow = 0.02425, pHigh = 1 - pLow;
+            let q, r;
+
+            if (p < pLow) {
+                q = Math.sqrt(-2 * Math.log(p));
+                return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+                       ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+            } else if (p <= pHigh) {
+                q = p - 0.5;
+                r = q * q;
+                return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q /
+                       (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+            } else {
+                q = Math.sqrt(-2 * Math.log(1 - p));
+                return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+                        ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+            }
+        }
+
+        // Update slider displays
+        function setupSliderListeners() {
+            const sliders = [
+                { id: 'num-loans', suffix: '' },
+                { id: 'avg-balance', prefix: '$', suffix: 'K' },
+                { id: 'corporate', suffix: '%' },
+                { id: 'consumer', suffix: '%' },
+                { id: 'realestate', suffix: '%' },
+                { id: 'receivables', suffix: '%' },
+                { id: 'correlation', suffix: '' },
+                { id: 'lgd', suffix: '%' }
+            ];
+
+            sliders.forEach(s => {
+                const slider = document.getElementById(s.id);
+                const display = document.getElementById(s.id + '-value');
+                slider.addEventListener('input', () => {
+                    display.textContent = (s.prefix || '') + slider.value + (s.suffix || '');
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            setupSliderListeners();
+            runSimulation();
+        });
+    </script>
+</body>
+</html>
